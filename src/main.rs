@@ -18,6 +18,7 @@ fn main() {
 
     let mut opts = Options::new();
     opts.optflag("l", "", "Lists detailed information about the file");
+    opts.optflag("a", "", "Lists hidden files");
 
     let arg_matches = match opts.parse(&args[1..]) {
         Ok(s) => { s },
@@ -30,30 +31,49 @@ fn main() {
         String::from(".")
     };
 
+    let show_hidden = match arg_matches.opt_present("a") {
+        true => true,
+        false => false
+    };
+
     if arg_matches.opt_present("l") {
-        match output_dir_detailed(&path[..]) {
+        match output_dir_detailed(&path[..], show_hidden) {
             Ok(_) => (),
             Err(e) => panic!("{}", e.to_string())
         };
     } else {
-        match output_dir_contents(&path[..]) {
+        match output_dir_contents(&path[..], show_hidden) {
             Ok(_) => (),
             Err(e) => panic!("{}", e.to_string())
         };
     }
 }
 
-fn output_dir_contents(path: &str) -> std::io::Result<()> {
+fn output_dir_contents(path: &str, show_hidden: bool) -> std::io::Result<()> {
     for entry in fs::read_dir(path)? {
         let file = entry?;
+
+        if let Some(first_char) = file.file_name().to_string_lossy().chars().next() {
+            if first_char == '.' && !show_hidden {
+                continue;
+            }
+        }
         println!("{:?}", file.file_name());
     }
     Ok(())
 }
 
-fn output_dir_detailed(path: &str) -> std::io::Result<()> {
+fn output_dir_detailed(path: &str, show_hidden: bool) -> std::io::Result<()> {
     for entry in fs::read_dir(path)? {
         let file = entry?;
+        let file_name = file.file_name();
+
+        if let Some(first_char) = file_name.to_string_lossy().chars().next() {
+            if first_char == '.' && !show_hidden {
+                continue;
+            }
+        }
+
         let metadata = file.metadata()?;
 
         let user = match get_user_by_uid(metadata.st_uid()) {
