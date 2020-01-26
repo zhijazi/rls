@@ -1,6 +1,10 @@
 extern crate getopts;
 extern crate chrono;
 extern crate users;
+extern crate regex;
+
+pub mod perms;
+pub mod file_parser;
 
 use std::{ env, fs };
 use std::os::linux::fs::MetadataExt;
@@ -36,17 +40,11 @@ fn main() {
         false => false
     };
 
-    if arg_matches.opt_present("l") {
-        match output_dir_detailed(&path[..], show_hidden) {
-            Ok(_) => (),
-            Err(e) => panic!("{}", e.to_string())
-        };
-    } else {
-        match output_dir_contents(&path[..], show_hidden) {
-            Ok(_) => (),
-            Err(e) => panic!("{}", e.to_string())
-        };
-    }
+    let mut flags = file_parser::Flags::new();
+    flags.almost_all = show_hidden;
+
+    let files = file_parser::get_files(flags, &path);
+    println!("{:?}", files);
 }
 
 fn output_dir_contents(path: &str, show_hidden: bool) -> std::io::Result<()> {
@@ -90,7 +88,7 @@ fn output_dir_detailed(path: &str, show_hidden: bool) -> std::io::Result<()> {
         let last_modified: DateTime<Local> = last_modified.into();
 
         let mode = metadata.permissions().mode();
-        let perm_str = perms_to_str(mode);
+        let perm_str = perms::perms_to_str(mode);
 
         let file_type: char = {
             if metadata.is_dir() {
@@ -105,40 +103,3 @@ fn output_dir_detailed(path: &str, show_hidden: bool) -> std::io::Result<()> {
     Ok(())
 }
 
-fn perms_to_str(mut perm_oct: u32) -> String {
-    let mut perm_str = String::from("");
-    let others = perm_oct%8;
-    perm_oct/=8;
-    let group = perm_oct%8;
-    perm_oct/=8;
-    let owner = perm_oct%8;
-
-    perm_str.push_str(&octal_to_str(owner));
-    perm_str.push_str(&octal_to_str(group));
-    perm_str.push_str(&octal_to_str(others));
-
-    perm_str
-}
-
-fn octal_to_str(oct: u32) -> String {
-    let mut perm = String::from("");
-    if (oct >> 2) & 1 == 1 {
-        perm.push('r');
-    } else {
-        perm.push('-');
-    }
-
-    if (oct >> 1) & 1 == 1 {
-        perm.push('w');
-    } else {
-        perm.push('-');
-    }
-
-    if oct & 1 == 1 {
-        perm.push('x');
-    } else {
-        perm.push('-');
-    }
-
-    perm
-}
