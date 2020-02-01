@@ -17,6 +17,7 @@ fn main() {
     opts.optflag("l", "", "Lists detailed information about the file");
     opts.optflag("a", "", "Lists hidden files");
     opts.optopt("", "hide", "do not list implied entries matching shell PATTERN (overriden by -a or -A)", "PATTERN");
+    opts.optopt("I", "ignore", "do not list implied entries matching shell PATTERN", "PATTERN");
 
     let arg_matches = match opts.parse(&args[1..]) {
         Ok(s) => { s },
@@ -34,6 +35,7 @@ fn main() {
 
     file_filter_flags.almost_all = arg_matches.opt_present("a");
     file_filter_flags.hide = arg_matches.opt_str("hide");
+    file_filter_flags.ignore = arg_matches.opt_str("I");
 
     output_filter_flags.detailed = arg_matches.opt_present("l");
 
