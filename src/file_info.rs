@@ -1,4 +1,4 @@
-use std::{ fs };
+use std::path::PathBuf;
 use std::os::linux::fs::MetadataExt;
 use std::os::unix::fs::PermissionsExt;
 
@@ -21,7 +21,7 @@ impl Flags {
     }
 }
 
-pub fn print_details(flags: Flags, files: Vec<fs::DirEntry>) {
+pub fn print_details(flags: Flags, files: Vec<PathBuf>) {
     if flags.detailed {
         print_detailed(files);
     } else {
@@ -29,15 +29,23 @@ pub fn print_details(flags: Flags, files: Vec<fs::DirEntry>) {
     }
 }
 
-fn print_simple(files: Vec<fs::DirEntry>) {
+fn print_simple(files: Vec<PathBuf>) {
     for file in files {
-        println!("{}", file.file_name().to_string_lossy());
+        if let Some(name) = file.file_name() {
+            println!("{}", name.to_string_lossy());
+        } else {
+            println!("{}", file.to_string_lossy());
+        }
     }
 }
 
-fn print_detailed(files: Vec<fs::DirEntry>) {
+fn print_detailed(files: Vec<PathBuf>) {
     for file in files {
-        let file_name = file.file_name();
+        let file_name = if let Some(name) = file.file_name() {
+            name.to_string_lossy()
+        } else {
+            file.to_string_lossy()
+        };
 
         let metadata = file.metadata().expect("Metadata cannot be acquired");
 
@@ -53,7 +61,7 @@ fn print_detailed(files: Vec<fs::DirEntry>) {
         println!("{}{} {} {} {} {} {} {}", file_type, perm_str,
             metadata.st_nlink(), user.name().to_string_lossy(),
             group.name().to_string_lossy(), metadata.len(),
-            last_modified.format("%b %d %H:%M"), file_name.to_string_lossy());
+            last_modified.format("%b %d %H:%M"), file_name);
     }
 }
 

@@ -1,4 +1,5 @@
 use std::{ fs };
+use std::path::{Path, PathBuf};
 use regex::Regex;
 
 pub struct Flags {
@@ -27,40 +28,50 @@ impl Flags {
     }
 }
 
-pub fn get_files(flags: Flags, path: &str) -> Vec<fs::DirEntry> {
-    let mut files: Vec<fs::DirEntry> = Vec::new();
+pub fn get_files(flags: Flags, path: &str) -> Vec<PathBuf> {
+    let mut files: Vec<PathBuf> = Vec::new();
+    if flags.all {
+        files.push(Path::new(".").to_path_buf());
+        files.push(Path::new("..").to_path_buf());
+    }
     if let Ok(entries) = fs::read_dir(path) {
         for entry in entries {
             if let Ok(entry) = entry {
-                let file_name = entry.file_name();
+                let path = entry.path();
 
+                let file_name = if let Some(name) = path.file_name() {
+                    name.to_string_lossy()
+                } else {
+                    path.to_string_lossy()
+                };
+                
                 if !flags.almost_all && !flags.all {
-                    if let Some('.') = file_name.to_string_lossy().clone().chars().next() {
+                    if let Some('.') = file_name.clone().chars().next() {
                         continue;
                     }
 
                     if let Some(ref pattern) = flags.hide {
                         let re = Regex::new(&pattern).expect("Invalid regular found");
-                        if re.is_match(&file_name.to_string_lossy()) {
+                        if re.is_match(&file_name) {
                             continue;
                         }
                     }
                 }
 
                 if flags.ignore_backups {
-                    if let Some('~') = file_name.to_string_lossy().clone().chars().last() {
+                    if let Some('~') = file_name.clone().chars().last() {
                         continue;
                     }
                 }
 
                 if let Some(ref pattern) = flags.ignore {
                     let re = Regex::new(&pattern).expect("Invalid regular expression");
-                    if re.is_match(&file_name.to_string_lossy()) {
+                    if re.is_match(&file_name) {
                         continue;
                     }
                 }
 
-                files.push(entry);
+                files.push(path);
             }
         }
     } 
