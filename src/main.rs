@@ -16,6 +16,7 @@ fn main() {
     let mut opts = Options::new();
     opts.optflag("l", "", "Lists detailed information about the file");
     opts.optflag("a", "", "Lists hidden files");
+    opts.optopt("", "hide", "do not list implied entries matching shell PATTERN (overriden by -a or -A)", "PATTERN");
 
     let arg_matches = match opts.parse(&args[1..]) {
         Ok(s) => { s },
@@ -32,8 +33,9 @@ fn main() {
     };
 
     file_filter_flags.almost_all = arg_matches.opt_present("a");
-    output_filter_flags.detailed = arg_matches.opt_present("l");
+    file_filter_flags.hide = arg_matches.opt_str("hide");
 
+    output_filter_flags.detailed = arg_matches.opt_present("l");
 
     let files = file_parser::get_files(file_filter_flags, &path);
     file_info::print_details(output_filter_flags, files);
