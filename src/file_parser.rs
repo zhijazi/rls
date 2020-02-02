@@ -30,6 +30,11 @@ impl Flags {
 
 pub fn get_files(flags: Flags, path: &str) -> Vec<PathBuf> {
     let mut files: Vec<PathBuf> = Vec::new();
+    if flags.directory {
+        files.push(Path::new(".").to_path_buf());
+        return files
+    }
+
     if flags.all {
         files.push(Path::new(".").to_path_buf());
         files.push(Path::new("..").to_path_buf());
@@ -46,7 +51,7 @@ pub fn get_files(flags: Flags, path: &str) -> Vec<PathBuf> {
                 };
                 
                 if !flags.almost_all && !flags.all {
-                    if let Some('.') = file_name.clone().chars().next() {
+                    if file_name.starts_with(".") {
                         continue;
                     }
 
@@ -59,7 +64,7 @@ pub fn get_files(flags: Flags, path: &str) -> Vec<PathBuf> {
                 }
 
                 if flags.ignore_backups {
-                    if let Some('~') = file_name.clone().chars().last() {
+                    if file_name.ends_with("~") {
                         continue;
                     }
                 }
