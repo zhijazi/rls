@@ -31,12 +31,14 @@ pub fn print_details(flags: Flags, files: Vec<PathBuf>) {
 
 fn print_simple(files: Vec<PathBuf>) {
     for file in files {
-        if let Some(name) = file.file_name() {
-            println!("{}", name.to_string_lossy());
-        } else {
-            println!("{}", file.to_string_lossy());
-        }
+        let file_name = match file.file_name() {
+            Some(name) => name.to_string_lossy(),
+            None => file.to_string_lossy()
+        };
+
+        println!("{}  ", file_name);
     }
+    // println!(); TODO Output sizing options
 }
 
 fn print_detailed(files: Vec<PathBuf>) {
