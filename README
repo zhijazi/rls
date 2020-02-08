@@ -1,4 +1,4 @@
 # rls
-Rust implemenation of the ls command to list directories. This repo was created with the intent of learning Rust, and will continue to be updated with that in mind.
+Rust implemenation of the ls command to list directory contents. This repo was created with the intent of learning Rust, and will continue to be updated with that in mind.
 
 More information about available functionality to be added here in the future
